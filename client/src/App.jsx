@@ -11,7 +11,7 @@ export default function App() {
   const [roomId, setRoomId] = useState("");
   const [userName, setUserName] = useState("");
   const [language, setLanguage] = useState("javascript");
-  const [code, setCode] = useState("");
+  const [code, setCode] = useState("//start code here");
   const [copySuccess, setCopySuccess] = useState("");
   const [users, setUsers] = useState([]);
   const [typing, setTyping] = useState("");
@@ -27,11 +27,15 @@ export default function App() {
       setTyping(`${user} is typing...`);
       setTimeout(() => setTyping(""), 1000);
     });
+    socket.on("languageUpdate", (newLanguage) => {
+      setLanguage(newLanguage);
+    });
 
     return () => {
       socket.off("userJoined");
       socket.off("codeUpdate");
       socket.off("userTyping");
+      socket.off("languageUpdate");
     };
   }, []);
   useEffect(() => {
@@ -56,6 +60,10 @@ export default function App() {
   const leaveRoom = () => {
     socket.emit("leaveRoom");
     setJoined(false);
+    setRoomId("");
+    setUserName("");
+    setCode("");
+    setLanguage("javascript");
   };
 
   const copyRoomId = () => {
@@ -70,6 +78,12 @@ export default function App() {
     setCode(newCode);
     socket.emit("codeChange", { roomId, code: newCode });
     socket.emit("typing", { roomId, userName });
+  };
+
+  const handleLanguageChange = (e) => {
+    const newLanguage = e.target.value;
+    setLanguage(newLanguage);
+    socket.emit("languageChange", { roomId, language: newLanguage });
   };
 
   if (!joined) {
@@ -116,7 +130,7 @@ export default function App() {
         <select
           className="language-selector"
           value={language}
-          onChange={(e) => setLanguage(e.target.value)}
+          onChange={handleLanguageChange}
         >
           <option value="javascript">JavaScript</option>
           <option value="python">Python</option>

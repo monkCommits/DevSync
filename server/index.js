@@ -58,6 +58,10 @@ io.on("connection", (socket) => {
     socket.to(roomId).emit("userTyping", userName);
   });
 
+  socket.on("languageChange", ({ roomId, language }) => {
+    io.to(roomId).emit("languageUpdate", language);
+  });
+
   socket.on("disconnect", () => {
     if (currentRoom && currentUser) {
       rooms.get(currentRoom).delete(currentUser);
