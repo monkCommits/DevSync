@@ -3,9 +3,7 @@ import http from "http";
 import { Server } from "socket.io";
 
 const app = express();
-
 const server = http.createServer(app);
-
 const io = new Server(server, {
   cors: {
     origin: "*",
@@ -15,32 +13,58 @@ const io = new Server(server, {
 const rooms = new Map();
 
 io.on("connection", (socket) => {
-  console.log("User Connected", socket.id);
+  console.log(`user connected with id ${socket.id}`);
+
   let currentRoom = null;
   let currentUser = null;
 
   socket.on("join", ({ roomId, userName }) => {
     if (currentRoom) {
-      socket.leave();
+      socket.leave(currentRoom);
       rooms.get(currentRoom).delete(currentUser);
-      io.to(currentRoom).emit("User left", Array.from(rooms.get(currentRoom)));
+      //below even should be 'userLeft' and data should be currentUser
+      io.to(currentRoom).emit("userJoined", Array.from(rooms.get(currentRoom)));
     }
-
     currentRoom = roomId;
     currentUser = userName;
-
     socket.join(roomId);
     if (!rooms.has(roomId)) {
       rooms.set(roomId, new Set());
     }
     rooms.get(roomId).add(userName);
-    io.to(roomId).emit("User joined", Array.from(rooms.get(currentRoom)));
-    console.log("user joined room", roomId);
+    io.to(roomId).emit("userJoined", Array.from(rooms.get(currentRoom)));
+    console.log(rooms);
+
+    console.log(`user joined room ${roomId}`);
+  });
+
+  socket.on("codeChange", ({ roomId, code }) => {
+    socket.to(roomId).emit("codeUpdate", code);
+  });
+
+  socket.on("leaveRoom", () => {
+    if (currentRoom && currentUser) {
+      rooms.get(currentRoom).delete(currentUser);
+      io.to(currentRoom).emit("userJoined", Array.from(rooms.get(currentRoom)));
+
+      socket.leave(currentRoom);
+
+      currentRoom = null;
+      currentUser = null;
+    }
+  });
+
+  socket.on("disconnect", () => {
+    if (currentRoom && currentUser) {
+      rooms.get(currentRoom).delete(currentUser);
+      io.to(currentRoom).emit("userJoined", Array.from(rooms.get(currentRoom)));
+    }
+    console.log(`user disconnected`);
   });
 });
 
 const port = process.env.PORT || 5000;
 
 server.listen(port, () => {
-  console.log(`Server is listening on port 5000`);
+  console.log(`server running on port ${port}`);
 });
