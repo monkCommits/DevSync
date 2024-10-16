@@ -14,6 +14,7 @@ export default function App() {
   const [code, setCode] = useState("");
   const [copySuccess, setCopySuccess] = useState("");
   const [users, setUsers] = useState([]);
+  const [typing, setTyping] = useState("");
 
   useEffect(() => {
     socket.on("userJoined", (users) => {
@@ -22,10 +23,15 @@ export default function App() {
     socket.on("codeUpdate", (newCode) => {
       setCode(newCode);
     });
+    socket.on("userTyping", (user) => {
+      setTyping(`${user} is typing...`);
+      setTimeout(() => setTyping(""), 1000);
+    });
 
     return () => {
       socket.off("userJoined");
       socket.off("codeUpdate");
+      socket.off("userTyping");
     };
   }, []);
   useEffect(() => {
@@ -40,11 +46,16 @@ export default function App() {
     };
   }, []);
 
-  const joinRomm = () => {
+  const joinRoom = () => {
     if (roomId && userName) {
       socket.emit("join", { roomId, userName });
       setJoined(true);
     }
+  };
+
+  const leaveRoom = () => {
+    socket.emit("leaveRoom");
+    setJoined(false);
   };
 
   const copyRoomId = () => {
@@ -58,6 +69,7 @@ export default function App() {
   const handleCodeChange = (newCode) => {
     setCode(newCode);
     socket.emit("codeChange", { roomId, code: newCode });
+    socket.emit("typing", { roomId, userName });
   };
 
   if (!joined) {
@@ -77,7 +89,7 @@ export default function App() {
             value={userName}
             onChange={(e) => setUserName(e.target.value)}
           />
-          <button type="button" onClick={joinRomm}>
+          <button type="button" onClick={joinRoom}>
             Join Room
           </button>
         </div>
@@ -100,7 +112,7 @@ export default function App() {
             <li key={index}>{user}</li>
           ))}
         </ul>
-        <p className="typing-indicator">user typing ...</p>
+        <p className="typing-indicator">{typing}</p>
         <select
           className="language-selector"
           value={language}
@@ -111,7 +123,9 @@ export default function App() {
           <option value="cpp">C++</option>
           <option value="java">Java</option>
         </select>
-        <button className="leave-button">Leave Room</button>
+        <button className="leave-button" onClick={leaveRoom}>
+          Leave Room
+        </button>
       </div>
 
       <div className="editor-wrapper">

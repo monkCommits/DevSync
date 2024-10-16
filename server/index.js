@@ -54,6 +54,10 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on("typing", ({ roomId, userName }) => {
+    socket.to(roomId).emit("userTyping", userName);
+  });
+
   socket.on("disconnect", () => {
     if (currentRoom && currentUser) {
       rooms.get(currentRoom).delete(currentUser);
