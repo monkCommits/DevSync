@@ -157,9 +157,11 @@ export default function App() {
         </div>
         <h3>Users in Room</h3>
         <ul>
-          {users.map((user, index) => (
-            <li key={index}>{user}</li>
-          ))}
+          <ScrollToBottom>
+            {users.map((user, index) => (
+              <li key={index}>{user}</li>
+            ))}
+          </ScrollToBottom>
         </ul>
         <p className="typing-indicator">{typing}</p>
         <select
