@@ -273,3 +273,15 @@ ul li {
   background-color: #fff;
   width: 70%; /* Code editor will always take 70% */
 }
+.peer-container{
+  width: 200px; /* Adjust this value to make the video smaller */
+  height: 100px; /* Keep it full height or adjust as needed */
+}
+.peer-video, .peer-video-local{
+  width: 100%; /* Adjust this value to make the video smaller */
+  height: 100%; /* Keep it full height or adjust as needed */
+  position: relative;
+  float: right; /* Align the video to the right side of the screen */
+  border: 1px solid #ddd; /* Optional: Add a border for better visibility */
+  box-sizing: border-box;
+}

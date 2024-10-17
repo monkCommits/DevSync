@@ -4,7 +4,13 @@ import io from "socket.io-client";
 import Editor from "@monaco-editor/react";
 import { useEffect } from "react";
 import ScrollToBottom from "react-scroll-to-bottom";
-
+import Conference from "./Components/Conference.jsx";
+import Footer from "./Components/Footer";
+import {
+  selectIsConnectedToRoom,
+  useHMSActions,
+  useHMSStore,
+} from "@100mslive/react-sdk";
 const socket = io("http://localhost:5000/");
 
 export default function App() {
@@ -18,6 +24,16 @@ export default function App() {
   const [typing, setTyping] = useState("");
   const [currentMessage, setCurrentMessage] = useState("");
   const [messageList, setMessageList] = useState([]);
+
+  const hmsActions = useHMSActions();
+
+  // hmsActions.join({
+  //   userName,
+  //   authToken:
+  //     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ2ZXJzaW9uIjoyLCJ0eXBlIjoiYXBwIiwiYXBwX2RhdGEiOm51bGwsImFjY2Vzc19rZXkiOiI2NzEwOTE3NzQ5NDRmMDY3MzEzYTdkNGIiLCJyb2xlIjoiaG9zdCIsInJvb21faWQiOiI2NzEwYTkwMjNlMjY0ZTcyNWM3YjM2NDAiLCJ1c2VyX2lkIjoiNDRmYjVlZmItN2E2Ny00Mjc1LWEyZDYtOWE2ZGU5Y2ZmNTk5IiwiZXhwIjoxNzI5MjM0NTcyLCJqdGkiOiJhYWQ1MGZhZS1kNmU3LTQ2YTItODQ4Yy0wZjViYTA2ZGFlMjAiLCJpYXQiOjE3MjkxNDgxNzIsImlzcyI6IjY3MTA5MTc3NDk0NGYwNjczMTNhN2Q0OSIsIm5iZiI6MTcyOTE0ODE3Miwic3ViIjoiYXBpIn0.gU8Swr5WFhOFrqTo4MQMltMWHZ3JJzcBE7r-RoZp564",
+  // });
+
+  const isConnected = useHMSStore(selectIsConnectedToRoom);
 
   useEffect(() => {
     socket.on("userJoined", (users) => {
@@ -56,6 +72,14 @@ export default function App() {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, []);
+
+  useEffect(() => {
+    window.onunload = () => {
+      if (isConnected) {
+        hmsActions.leave();
+      }
+    };
+  }, [hmsActions, isConnected]);
 
   const joinRoom = () => {
     if (roomId && userName) {
@@ -230,6 +254,12 @@ export default function App() {
             fontSize: 14,
           }}
         />
+      </div>
+      <div className="video-container">
+        <div className="App">
+          <Conference />
+          <Footer />
+        </div>
       </div>
     </div>
   );
