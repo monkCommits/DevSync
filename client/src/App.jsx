@@ -215,7 +215,20 @@ export default function App() {
         </div>
       </div>
 
-      <div className="editor-wrapper"></div>
+      <div className="editor-wrapper">
+        <Editor
+          height={"100%"}
+          defaultLanguage={language}
+          language={language}
+          value={code}
+          onChange={handleCodeChange}
+          theme="vs-dark"
+          options={{
+            minimap: { enabled: false },
+            fontSize: 14,
+          }}
+        />
+      </div>
     </div>
   );
 }
