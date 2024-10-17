@@ -69,6 +69,12 @@ io.on("connection", (socket) => {
     }
     console.log(`user disconnected`);
   });
+
+  socket.on("sendMessage", ({ roomId, userName, message, time }) => {
+    socket
+      .to(roomId)
+      .emit("receivedMessage", { roomId, userName, message, time });
+  });
 });
 
 const port = process.env.PORT || 5000;
