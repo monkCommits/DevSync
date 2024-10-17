@@ -26,7 +26,7 @@ export default function App() {
   const [messageList, setMessageList] = useState([]);
 
   const hmsActions = useHMSActions();
-
+  // hmsActions.join({ userName, roomId: "6710ce053e264e725c7b400a" });
   // hmsActions.join({
   //   userName,
   //   authToken:

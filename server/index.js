@@ -1,6 +1,11 @@
 import express from "express";
 import http from "http";
 import { Server } from "socket.io";
+import axios from "axios";
+import bodyParser from "body-parser";
+
+const MANAGEMENT_TOKEN =
+  "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3MjkxNDQ3NDAsImV4cCI6MTcyOTc0OTU0MCwianRpIjoiZjIwZWU0NzQtMWJkMC00YjkyLWEwMjQtOWZjZTRhYzNhNmZhIiwidHlwZSI6Im1hbmFnZW1lbnQiLCJ2ZXJzaW9uIjoyLCJuYmYiOjE3MjkxNDQ3NDAsImFjY2Vzc19rZXkiOiI2NzEwOTE3NzQ5NDRmMDY3MzEzYTdkNGIifQ.G9eJkTTYU7CqecFKo0iI3_fSLPOnIiKo5uMyXXf0O6c";
 
 const app = express();
 const server = http.createServer(app);
@@ -9,6 +14,7 @@ const io = new Server(server, {
     origin: "*",
   },
 });
+app.use(bodyParser.json());
 
 const rooms = new Map();
 
@@ -75,6 +81,73 @@ io.on("connection", (socket) => {
       .to(roomId)
       .emit("receivedMessage", { roomId, userName, message, time });
   });
+});
+
+// Function to create room codes
+const createRoomCodes = async (roomId) => {
+  try {
+    const response = await axios.post(
+      `https://api.100ms.live/v2/room-codes/room/${roomId}`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${MANAGEMENT_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error creating room codes:",
+      error.response ? error.response.data : error.message
+    );
+    throw error;
+  }
+};
+
+app.post("/create-room", async (req, res) => {
+  const { name, description, template_id } = req.body;
+
+  const data = {
+    name,
+    description,
+    template_id,
+  };
+
+  try {
+    // Step 1: Create the room
+    const roomResponse = await axios.post(
+      "https://api.100ms.live/v2/rooms",
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${MANAGEMENT_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const roomId = roomResponse.data.id;
+
+    // Step 2: Create room codes for the newly created room
+    const roomCodes = await createRoomCodes(roomId);
+
+    res.status(200).json({
+      room: roomResponse.data,
+      roomCodes,
+    });
+  } catch (error) {
+    if (error.response) {
+      res.status(error.response.status).json({
+        error: error.response.data,
+      });
+    } else {
+      res.status(500).json({
+        error: "An error occurred while creating the room or room codes.",
+      });
+    }
+  }
 });
 
 const port = process.env.PORT || 5000;
