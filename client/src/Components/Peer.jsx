@@ -13,11 +13,10 @@ export default function Peer({ peer }) {
         autoPlay
         muted
         playsInline
-      >
-        <div className="peer-name">
-          {peer.name} {peer.isLocal ? "(You)" : ""}
-        </div>
-      </video>
+      ></video>
+      <div className="peer-name">
+        {peer.name} {peer.isLocal ? "(You)" : ""}
+      </div>
     </div>
   );
 }

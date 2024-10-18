@@ -4,7 +4,8 @@ const Footer = () => {
   const { isLocalAudioEnabled, toggleAudio, isLocalVideoEnabled, toggleVideo } =
     useAVToggle();
   return (
-    <div className="control-bar">
+    // temporary css
+    <div className="control-bar" style={{ paddingLeft: "120px" }}>
       <button className="btn-control" onClick={toggleAudio}>
         {isLocalAudioEnabled ? "Mute" : "Unmute"}
       </button>

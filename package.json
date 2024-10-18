@@ -13,6 +13,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@100mslive/server-sdk": "^0.3.0",
     "axios": "^1.7.7",
     "body-parser": "^1.20.3",
     "express": "^4.21.1",

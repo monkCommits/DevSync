@@ -11,6 +11,7 @@ import {
   useHMSActions,
   useHMSStore,
 } from "@100mslive/react-sdk";
+
 const socket = io("http://localhost:5000/");
 
 export default function App() {
@@ -24,20 +25,38 @@ export default function App() {
   const [typing, setTyping] = useState("");
   const [currentMessage, setCurrentMessage] = useState("");
   const [messageList, setMessageList] = useState([]);
-
+  const isConnected = useHMSStore(selectIsConnectedToRoom);
   const hmsActions = useHMSActions();
-  // hmsActions.join({ userName, roomId: "6710ce053e264e725c7b400a" });
+
+  //as of now this works
   // hmsActions.join({
   //   userName,
   //   authToken:
-  //     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ2ZXJzaW9uIjoyLCJ0eXBlIjoiYXBwIiwiYXBwX2RhdGEiOm51bGwsImFjY2Vzc19rZXkiOiI2NzEwOTE3NzQ5NDRmMDY3MzEzYTdkNGIiLCJyb2xlIjoiaG9zdCIsInJvb21faWQiOiI2NzEwYTkwMjNlMjY0ZTcyNWM3YjM2NDAiLCJ1c2VyX2lkIjoiNDRmYjVlZmItN2E2Ny00Mjc1LWEyZDYtOWE2ZGU5Y2ZmNTk5IiwiZXhwIjoxNzI5MjM0NTcyLCJqdGkiOiJhYWQ1MGZhZS1kNmU3LTQ2YTItODQ4Yy0wZjViYTA2ZGFlMjAiLCJpYXQiOjE3MjkxNDgxNzIsImlzcyI6IjY3MTA5MTc3NDk0NGYwNjczMTNhN2Q0OSIsIm5iZiI6MTcyOTE0ODE3Miwic3ViIjoiYXBpIn0.gU8Swr5WFhOFrqTo4MQMltMWHZ3JJzcBE7r-RoZp564",
+  //     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ2ZXJzaW9uIjoyLCJ0eXBlIjoiYXBwIiwiYXBwX2RhdGEiOm51bGwsImFjY2Vzc19rZXkiOiI2NzEwOTE3NzQ5NDRmMDY3MzEzYTdkNGIiLCJyb2xlIjoiaG9zdCIsInJvb21faWQiOiI2NzEwZjMyZDhjZWY5Y2EzMzU1YjQyNGIiLCJ1c2VyX2lkIjoiNDYzNmMzNjEtMzk3ZC00NjdkLTgyOTgtYzg3MTFjOTBjYTk1IiwiZXhwIjoxNzI5MzA3NDc4LCJqdGkiOiI2NzNmOTMwMC02OTE2LTRhYzMtOWUxZi02MTg4MmIwNGY1NTYiLCJpYXQiOjE3MjkyMjEwNzgsImlzcyI6IjY3MTA5MTc3NDk0NGYwNjczMTNhN2Q0OSIsIm5iZiI6MTcyOTIyMTA3OCwic3ViIjoiYXBpIn0.qhU06CAV_wXSj62KIPycS6t5o_0Pgl9lsR1ywwN7CkI",
   // });
 
-  const isConnected = useHMSStore(selectIsConnectedToRoom);
+  useEffect(() => {
+    socket.on("authToken", async (token) => {
+      console.log("auth token trigr");
+      // token = JSON.parse(token);
+      token = token.token.token;
+      token = String(token);
+      console.log(token);
+
+      await hmsActions.join({
+        userName,
+        authToken: token,
+      });
+    });
+  });
 
   useEffect(() => {
     socket.on("userJoined", (users) => {
       setUsers(users);
+    });
+    socket.on("roomCode", (data) => {
+      // setRoomCode(data.roomCode);
+      console.log("Received room code:", data.roomCode);
     });
     socket.on("codeUpdate", (newCode) => {
       setCode(newCode);
@@ -51,6 +70,10 @@ export default function App() {
     });
     socket.on("receivedMessage", ({ roomId, userName, message, time }) => {
       setMessageList((list) => [...list, { roomId, userName, message, time }]);
+    });
+    //temporary code - make it better
+    socket.on("userLeft", () => {
+      hmsActions.leave();
     });
 
     return () => {

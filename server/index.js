@@ -2,19 +2,20 @@ import express from "express";
 import http from "http";
 import { Server } from "socket.io";
 import axios from "axios";
-import bodyParser from "body-parser";
+import HMS from "@100mslive/server-sdk";
 
-const MANAGEMENT_TOKEN =
-  "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3MjkxNDQ3NDAsImV4cCI6MTcyOTc0OTU0MCwianRpIjoiZjIwZWU0NzQtMWJkMC00YjkyLWEwMjQtOWZjZTRhYzNhNmZhIiwidHlwZSI6Im1hbmFnZW1lbnQiLCJ2ZXJzaW9uIjoyLCJuYmYiOjE3MjkxNDQ3NDAsImFjY2Vzc19rZXkiOiI2NzEwOTE3NzQ5NDRmMDY3MzEzYTdkNGIifQ.G9eJkTTYU7CqecFKo0iI3_fSLPOnIiKo5uMyXXf0O6c";
+const hms = new HMS.SDK(
+  "671091774944f067313a7d4b",
+  "Ltu9b-0LlNTXfMR1Bj28YEEZ0oUAKThFgMJUYmRQtToahIrDDeGh1ZDuWH8ZISksxmpXacxsh6n-wP4wfRTlots94c8z5uOwTgQr80M1ZECOxB4YfeE0C_bwyJwb3DVeyfTeo5aKoYEDv786v6ATv2isvnkTuB8N6R6-_IBVFKQ="
+); // Add your SDK key and secret
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: "*", // Change this to your frontend URL in production
   },
 });
-app.use(bodyParser.json());
 
 const rooms = new Map();
 
@@ -24,22 +25,47 @@ io.on("connection", (socket) => {
   let currentRoom = null;
   let currentUser = null;
 
-  socket.on("join", ({ roomId, userName }) => {
+  socket.on("join", async ({ roomId, userName }) => {
     if (currentRoom) {
       socket.leave(currentRoom);
       rooms.get(currentRoom).delete(currentUser);
-      //below even should be 'userLeft' and data should be currentUser
       io.to(currentRoom).emit("userJoined", Array.from(rooms.get(currentRoom)));
     }
+
     currentRoom = roomId;
     currentUser = userName;
     socket.join(roomId);
+
     if (!rooms.has(roomId)) {
       rooms.set(roomId, new Set());
     }
     rooms.get(roomId).add(userName);
     io.to(roomId).emit("userJoined", Array.from(rooms.get(currentRoom)));
-    console.log(rooms);
+
+    try {
+      const roomCreateOptions = {
+        name: `${roomId} Room`, // You can customize the room name based on the roomId
+        description: `Room for ${userName}`,
+        recording_info: { enabled: false }, // Enable recording if needed
+      };
+
+      const room = await hms.rooms.create(roomCreateOptions); // Create the room
+      console.log("Room created:", room); // Log the created room details
+
+      // Generate auth token
+      const tokenConfig = {
+        roomId: room.id, // Use the ID of the newly created room
+        role: "host",
+        userId: userName,
+      }; // Use userName as userId or assign a unique ID
+
+      const token = await hms.auth.getAuthToken(tokenConfig); // Generate token
+      socket.emit("authToken", { token });
+      console.log(userName);
+    } catch (error) {
+      console.error("Error creating room or generating token:", error);
+      socket.emit("authError", "Could not create room or generate auth token"); // Notify client of error
+    }
 
     console.log(`user joined room ${roomId}`);
   });
@@ -52,11 +78,10 @@ io.on("connection", (socket) => {
     if (currentRoom && currentUser) {
       rooms.get(currentRoom).delete(currentUser);
       io.to(currentRoom).emit("userJoined", Array.from(rooms.get(currentRoom)));
-
       socket.leave(currentRoom);
-
       currentRoom = null;
       currentUser = null;
+      socket.emit("userLeft");
     }
   });
 
@@ -81,73 +106,6 @@ io.on("connection", (socket) => {
       .to(roomId)
       .emit("receivedMessage", { roomId, userName, message, time });
   });
-});
-
-// Function to create room codes
-const createRoomCodes = async (roomId) => {
-  try {
-    const response = await axios.post(
-      `https://api.100ms.live/v2/room-codes/room/${roomId}`,
-      {},
-      {
-        headers: {
-          Authorization: `Bearer ${MANAGEMENT_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    return response.data;
-  } catch (error) {
-    console.error(
-      "Error creating room codes:",
-      error.response ? error.response.data : error.message
-    );
-    throw error;
-  }
-};
-
-app.post("/create-room", async (req, res) => {
-  const { name, description, template_id } = req.body;
-
-  const data = {
-    name,
-    description,
-    template_id,
-  };
-
-  try {
-    // Step 1: Create the room
-    const roomResponse = await axios.post(
-      "https://api.100ms.live/v2/rooms",
-      data,
-      {
-        headers: {
-          Authorization: `Bearer ${MANAGEMENT_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    const roomId = roomResponse.data.id;
-
-    // Step 2: Create room codes for the newly created room
-    const roomCodes = await createRoomCodes(roomId);
-
-    res.status(200).json({
-      room: roomResponse.data,
-      roomCodes,
-    });
-  } catch (error) {
-    if (error.response) {
-      res.status(error.response.status).json({
-        error: error.response.data,
-      });
-    } else {
-      res.status(500).json({
-        error: "An error occurred while creating the room or room codes.",
-      });
-    }
-  }
 });
 
 const port = process.env.PORT || 5000;
