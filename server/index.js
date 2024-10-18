@@ -3,11 +3,12 @@ import http from "http";
 import { Server } from "socket.io";
 import axios from "axios";
 import HMS from "@100mslive/server-sdk";
+import path from "path";
+import dotenv from "dotenv";
 
-const hms = new HMS.SDK(
-  "671091774944f067313a7d4b",
-  "Ltu9b-0LlNTXfMR1Bj28YEEZ0oUAKThFgMJUYmRQtToahIrDDeGh1ZDuWH8ZISksxmpXacxsh6n-wP4wfRTlots94c8z5uOwTgQr80M1ZECOxB4YfeE0C_bwyJwb3DVeyfTeo5aKoYEDv786v6ATv2isvnkTuB8N6R6-_IBVFKQ="
-); // Add your SDK key and secret
+dotenv.config();
+
+const hms = new HMS.SDK(process.env.HMS_SDK_KEY, process.env.HMS_SDK_SECRET);
 
 const app = express();
 const server = http.createServer(app);
@@ -109,6 +110,14 @@ io.on("connection", (socket) => {
 });
 
 const port = process.env.PORT || 5000;
+
+const __dirname = path.resolve();
+
+app.use(express.static(path.join(__dirname, "..", "client", "dist")));
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "..", "client", "dist", "index.html"));
+});
 
 server.listen(port, () => {
   console.log(`server running on port ${port}`);
