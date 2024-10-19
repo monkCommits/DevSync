@@ -1,16 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./App.css";
 import io from "socket.io-client";
 import Editor from "@monaco-editor/react";
-import { useEffect } from "react";
 import ScrollToBottom from "react-scroll-to-bottom";
 import Conference from "./Components/Conference.jsx";
-import Footer from "./Components/Footer";
 import {
   selectIsConnectedToRoom,
   useHMSActions,
   useHMSStore,
 } from "@100mslive/react-sdk";
+import JoinRoom from "./Components/JoinRoom.jsx";
+import Sidebar from "./Components/Sidebar.jsx";
 
 const socket = io("http://localhost:5000/");
 
@@ -18,72 +18,55 @@ export default function App() {
   const [joined, setJoined] = useState(false);
   const [roomId, setRoomId] = useState("");
   const [userName, setUserName] = useState("");
-  const [language, setLanguage] = useState("javascript");
   const [code, setCode] = useState("//start code here");
-  const [copySuccess, setCopySuccess] = useState("");
   const [users, setUsers] = useState([]);
-  const [typing, setTyping] = useState("");
+  const [typing, setTyping] = useState(`User typing : `);
   const [currentMessage, setCurrentMessage] = useState("");
   const [messageList, setMessageList] = useState([]);
   const isConnected = useHMSStore(selectIsConnectedToRoom);
   const hmsActions = useHMSActions();
 
-  //as of now this works
-  // hmsActions.join({
-  //   userName,
-  //   authToken:
-  //     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ2ZXJzaW9uIjoyLCJ0eXBlIjoiYXBwIiwiYXBwX2RhdGEiOm51bGwsImFjY2Vzc19rZXkiOiI2NzEwOTE3NzQ5NDRmMDY3MzEzYTdkNGIiLCJyb2xlIjoiaG9zdCIsInJvb21faWQiOiI2NzEwZjMyZDhjZWY5Y2EzMzU1YjQyNGIiLCJ1c2VyX2lkIjoiNDYzNmMzNjEtMzk3ZC00NjdkLTgyOTgtYzg3MTFjOTBjYTk1IiwiZXhwIjoxNzI5MzA3NDc4LCJqdGkiOiI2NzNmOTMwMC02OTE2LTRhYzMtOWUxZi02MTg4MmIwNGY1NTYiLCJpYXQiOjE3MjkyMjEwNzgsImlzcyI6IjY3MTA5MTc3NDk0NGYwNjczMTNhN2Q0OSIsIm5iZiI6MTcyOTIyMTA3OCwic3ViIjoiYXBpIn0.qhU06CAV_wXSj62KIPycS6t5o_0Pgl9lsR1ywwN7CkI",
-  // });
-
   useEffect(() => {
     socket.on("authToken", async (token) => {
-      console.log("auth token trigr");
-      // token = JSON.parse(token);
-      token = token.token.token;
-      token = String(token);
-      console.log(token);
-
-      await hmsActions.join({
-        userName,
-        authToken: token,
-      });
+      await hmsActions.join({ userName, authToken: token.token.token });
     });
-  });
 
-  useEffect(() => {
     socket.on("userJoined", (users) => {
       setUsers(users);
     });
+
     socket.on("roomCode", (data) => {
-      // setRoomCode(data.roomCode);
       console.log("Received room code:", data.roomCode);
     });
+
     socket.on("codeUpdate", (newCode) => {
       setCode(newCode);
     });
+
     socket.on("userTyping", (user) => {
-      setTyping(`${user} is typing...`);
-      setTimeout(() => setTyping(""), 1000);
+      setTyping(`User typing : ${user}`);
+      setTimeout(() => setTyping(`User typing : `), 1000);
     });
-    socket.on("languageUpdate", (newLanguage) => {
-      setLanguage(newLanguage);
-    });
+
     socket.on("receivedMessage", ({ roomId, userName, message, time }) => {
       setMessageList((list) => [...list, { roomId, userName, message, time }]);
     });
-    //temporary code - make it better
-    socket.on("userLeft", () => {
+
+    socket.on("userLeft", (user) => {
       hmsActions.leave();
+      setUsers((prevUsers) => prevUsers.filter((u) => u !== user));
     });
 
     return () => {
+      socket.off("authToken");
       socket.off("userJoined");
       socket.off("codeUpdate");
       socket.off("userTyping");
-      socket.off("languageUpdate");
       socket.off("receivedMessage");
+      socket.off("userLeft");
     };
-  }, []);
+  }, [hmsActions, userName]);
+
   useEffect(() => {
     const handleBeforeUnload = () => {
       socket.emit("leaveRoom");
@@ -117,27 +100,16 @@ export default function App() {
     setRoomId("");
     setUserName("");
     setCode("");
-    setLanguage("javascript");
   };
 
   const copyRoomId = () => {
     navigator.clipboard.writeText(roomId);
-    setCopySuccess("Copied!");
-    setTimeout(() => {
-      setCopySuccess("");
-    }, 3000);
   };
 
   const handleCodeChange = (newCode) => {
     setCode(newCode);
     socket.emit("codeChange", { roomId, code: newCode });
     socket.emit("typing", { roomId, userName });
-  };
-
-  const handleLanguageChange = (e) => {
-    const newLanguage = e.target.value;
-    setLanguage(newLanguage);
-    socket.emit("languageChange", { roomId, language: newLanguage });
   };
 
   const handleMessageChange = (e) => {
@@ -150,10 +122,10 @@ export default function App() {
         roomId,
         userName,
         message: currentMessage,
-        time:
-          new Date(Date.now()).getHours() +
-          ":" +
-          new Date(Date.now()).getMinutes(),
+        time: new Date(Date.now()).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
       };
       setCurrentMessage("");
       socket.emit("sendMessage", messageData);
@@ -169,106 +141,35 @@ export default function App() {
 
   if (!joined) {
     return (
-      <div className="join-container">
-        <div className="join-form">
-          <h1>Join Code Room</h1>
-          <input
-            type="text"
-            placeholder="Room ID"
-            value={roomId}
-            onChange={(e) => setRoomId(e.target.value)}
-          />
-          <input
-            type="text"
-            placeholder="username"
-            value={userName}
-            onChange={(e) => setUserName(e.target.value)}
-          />
-          <button type="button" onClick={joinRoom}>
-            Join Room
-          </button>
-        </div>
-      </div>
+      <JoinRoom
+        joinRoom={joinRoom}
+        setRoomId={setRoomId}
+        setUserName={setUserName}
+        roomId={roomId}
+        userName={userName}
+      />
     );
   }
 
   return (
     <div className="editor-container">
-      <div className="sidebar">
-        <div className="room-info">
-          <h2>Code Room : {roomId}</h2>
-          <button onClick={copyRoomId} className="copy-button">
-            Copy ID
-          </button>
-          {copySuccess && <span className="copy-success">{copySuccess}</span>}
-        </div>
-        <h3>Users in Room</h3>
-        <ul>
-          <ScrollToBottom>
-            {users.map((user, index) => (
-              <li key={index}>{user}</li>
-            ))}
-          </ScrollToBottom>
-        </ul>
-        <p className="typing-indicator">{typing}</p>
-        <select
-          className="language-selector"
-          value={language}
-          onChange={handleLanguageChange}
-        >
-          <option value="javascript">JavaScript</option>
-          <option value="python">Python</option>
-          <option value="cpp">C++</option>
-          <option value="java">Java</option>
-        </select>
-        <button className="leave-button" onClick={leaveRoom}>
-          Leave Room
-        </button>
-        <div className="chat-window">
-          <div className="chat-header">
-            <p>Live Chat</p>
-          </div>
-          <div className="chat-body">
-            <ScrollToBottom className="message-container">
-              {messageList.map((messageContent) => {
-                return (
-                  <div
-                    className="message"
-                    id={userName === messageContent.userName ? "other" : "you"}
-                  >
-                    <div>
-                      <div className="message-content">
-                        <p>{messageContent.message}</p>
-                      </div>
-                      <div className="message-meta">
-                        <p id="time">{messageContent.time}</p>
-                        <p id="author">{messageContent.userName}</p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </ScrollToBottom>
-          </div>
-
-          <div className="chat-footer">
-            <input
-              type="text"
-              placeholder="type your messages here..."
-              onChange={handleMessageChange}
-              value={currentMessage}
-              onKeyDown={handleKeyPress}
-            />
-            <button onClick={sendMessage}>&#9658;</button>
-          </div>
-        </div>
-      </div>
-
+      <Sidebar
+        roomId={roomId}
+        copyRoomId={copyRoomId}
+        users={users}
+        typing={typing}
+        leaveRoom={leaveRoom}
+        messageList={messageList}
+        currentMessage={currentMessage}
+        handleMessageChange={handleMessageChange}
+        handleKeyPress={handleKeyPress}
+        sendMessage={sendMessage}
+        userName={userName}
+      />
       <div className="editor-wrapper">
         <Editor
           height={"100%"}
-          defaultLanguage={language}
-          language={language}
+          defaultLanguage={"javascript"}
           value={code}
           onChange={handleCodeChange}
           theme="vs-dark"
@@ -281,7 +182,6 @@ export default function App() {
       <div className="video-container">
         <div className="App">
           <Conference />
-          <Footer />
         </div>
       </div>
     </div>
