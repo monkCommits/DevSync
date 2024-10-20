@@ -12,7 +12,7 @@ import {
 import JoinRoom from "./Components/JoinRoom.jsx";
 import Sidebar from "./Components/Sidebar.jsx";
 
-const socket = io("https://dev-sync-murex.vercel.app/");
+const socket = io("https://dev-sync-kappa.vercel.app/");
 
 export default function App() {
   const [joined, setJoined] = useState(false);
@@ -70,7 +70,6 @@ export default function App() {
   useEffect(() => {
     const handleBeforeUnload = (e) => {
       if (isConnected) {
-        // For page refresh, we can detect it and possibly adjust actions
         if (
           performance.navigation.type === performance.navigation.TYPE_RELOAD
         ) {
@@ -79,11 +78,11 @@ export default function App() {
           console.log("Tab is being closed");
         }
 
-        hmsActions.leave(); // Try to leave the session
+        hmsActions.leave();
       }
 
       e.preventDefault();
-      e.returnValue = ""; // For legacy browser support
+      e.returnValue = "";
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
