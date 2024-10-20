@@ -29,11 +29,13 @@ const Sidebar = ({
       </div>
       <h3>Users in Room</h3>
       <ul>
-        <ScrollToBottom>
-          {users.map((user, index) => (
-            <li key={index}>{user}</li>
-          ))}
-        </ScrollToBottom>
+        <div className="users-wrapper">
+          <ScrollToBottom>
+            {users.map((user, index) => (
+              <li key={index}>{user}</li>
+            ))}
+          </ScrollToBottom>
+        </div>
       </ul>
       <p className="typing-indicator">{typing}</p>
 

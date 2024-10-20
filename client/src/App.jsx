@@ -68,6 +68,32 @@ export default function App() {
   }, [hmsActions, userName]);
 
   useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (isConnected) {
+        // For page refresh, we can detect it and possibly adjust actions
+        if (
+          performance.navigation.type === performance.navigation.TYPE_RELOAD
+        ) {
+          console.log("Page is being reloaded");
+        } else {
+          console.log("Tab is being closed");
+        }
+
+        hmsActions.leave(); // Try to leave the session
+      }
+
+      e.preventDefault();
+      e.returnValue = ""; // For legacy browser support
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [hmsActions, isConnected]);
+
+  useEffect(() => {
     const handleBeforeUnload = () => {
       socket.emit("leaveRoom");
     };
@@ -78,14 +104,6 @@ export default function App() {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, []);
-
-  useEffect(() => {
-    window.onunload = () => {
-      if (isConnected) {
-        hmsActions.leave();
-      }
-    };
-  }, [hmsActions, isConnected]);
 
   const joinRoom = () => {
     if (roomId && userName) {
