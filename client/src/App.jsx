@@ -12,7 +12,7 @@ import {
 import JoinRoom from "./Components/JoinRoom.jsx";
 import Sidebar from "./Components/Sidebar.jsx";
 
-const socket = io("https://dev-sync-kappa.vercel.app/");
+const socket = io("https://devsync-m54y.onrender.com");
 
 export default function App() {
   const [joined, setJoined] = useState(false);
