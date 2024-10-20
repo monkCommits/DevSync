@@ -45,27 +45,26 @@ io.on("connection", (socket) => {
 
     try {
       const roomCreateOptions = {
-        name: `${roomId} Room`, // You can customize the room name based on the roomId
+        name: `${roomId} Room`,
         description: `Room for ${userName}`,
-        recording_info: { enabled: false }, // Enable recording if needed
+        recording_info: { enabled: false },
       };
 
-      const room = await hms.rooms.create(roomCreateOptions); // Create the room
-      console.log("Room created:", room); // Log the created room details
+      const room = await hms.rooms.create(roomCreateOptions);
+      console.log("Room created:", room);
 
-      // Generate auth token
       const tokenConfig = {
-        roomId: room.id, // Use the ID of the newly created room
+        roomId: room.id,
         role: "host",
         userId: userName,
-      }; // Use userName as userId or assign a unique ID
+      };
 
-      const token = await hms.auth.getAuthToken(tokenConfig); // Generate token
+      const token = await hms.auth.getAuthToken(tokenConfig);
       socket.emit("authToken", { token });
       console.log(userName);
     } catch (error) {
       console.error("Error creating room or generating token:", error);
-      socket.emit("authError", "Could not create room or generate auth token"); // Notify client of error
+      socket.emit("authError", "Could not create room or generate auth token");
     }
 
     console.log(`user joined room ${roomId}`);
@@ -108,7 +107,31 @@ io.on("connection", (socket) => {
       .emit("receivedMessage", { roomId, userName, message, time });
   });
 });
+
 //
+const url = `https://devsync-m54y.onrender.com`;
+const interval = 30000;
+
+function reloadWebsite() {
+  axios
+    .get(url)
+    .then((response) => {
+      console.log(
+        `Reloaded at ${new Date().toISOString()}: Status Code ${
+          response.status
+        }`
+      );
+    })
+    .catch((error) => {
+      console.error(
+        `Error reloading at ${new Date().toISOString()}:`,
+        error.message
+      );
+    });
+}
+
+setInterval(reloadWebsite, interval);
+
 const port = process.env.PORT || 5000;
 
 const __dirname = path.resolve();
