@@ -12,7 +12,7 @@ import {
 import JoinRoom from "./Components/JoinRoom.jsx";
 import Sidebar from "./Components/Sidebar.jsx";
 
-const socket = io("https://devsync-m54y.onrender.com");
+const socket = io("https://dev-sync-murex.vercel.app/");
 
 export default function App() {
   const [joined, setJoined] = useState(false);
