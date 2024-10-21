@@ -12,7 +12,7 @@ import {
 import JoinRoom from "./Components/JoinRoom.jsx";
 import Sidebar from "./Components/Sidebar.jsx";
 
-const socket = io("https://devsync-m54y.onrender.com");
+const socket = io("http://localhost:5000/");
 
 export default function App() {
   const [joined, setJoined] = useState(false);
