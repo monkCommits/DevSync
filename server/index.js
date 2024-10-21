@@ -109,38 +109,38 @@ io.on("connection", (socket) => {
 });
 
 //
-const url = `https://devsync-m54y.onrender.com`;
-const interval = 30000;
+// const url = `https://devsync-m54y.onrender.com`;
+// const interval = 30000;
 
-function reloadWebsite() {
-  axios
-    .get(url)
-    .then((response) => {
-      console.log(
-        `Reloaded at ${new Date().toISOString()}: Status Code ${
-          response.status
-        }`
-      );
-    })
-    .catch((error) => {
-      console.error(
-        `Error reloading at ${new Date().toISOString()}:`,
-        error.message
-      );
-    });
-}
+// function reloadWebsite() {
+//   axios
+//     .get(url)
+//     .then((response) => {
+//       console.log(
+//         `Reloaded at ${new Date().toISOString()}: Status Code ${
+//           response.status
+//         }`
+//       );
+//     })
+//     .catch((error) => {
+//       console.error(
+//         `Error reloading at ${new Date().toISOString()}:`,
+//         error.message
+//       );
+//     });
+// }
 
-setInterval(reloadWebsite, interval);
+// setInterval(reloadWebsite, interval);
 
 const port = process.env.PORT || 5000;
 
-const __dirname = path.resolve();
+// const __dirname = path.resolve();
 
-app.use(express.static(path.join(__dirname, "client/dist")));
+// app.use(express.static(path.join(__dirname, "client/dist")));
 
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "client", "dist", "index.html"));
-});
+// app.get("*", (req, res) => {
+//   res.sendFile(path.join(__dirname, "client", "dist", "index.html"));
+// });
 
 server.listen(port, () => {
   console.log(`server running on port ${port}`);

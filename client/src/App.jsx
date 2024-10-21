@@ -55,6 +55,9 @@ export default function App() {
     socket.on("userLeft", (user) => {
       hmsActions.leave();
       setUsers((prevUsers) => prevUsers.filter((u) => u !== user));
+      if (!user) {
+        setMessageList([]);
+      }
     });
 
     return () => {
