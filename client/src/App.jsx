@@ -113,9 +113,21 @@ export default function App() {
   }, []);
 
   const joinRoom = () => {
-    if (roomId && userName) {
-      socket.emit("join", { roomId, userName });
+    if (!roomId || !userName) {
+      alert("Please enter both room ID and username.");
+      return;
     }
+
+    if (userName.length > 10) {
+      alert("Username must be less than 10 characters.");
+      return;
+    }
+
+    if (roomId.length > 5) {
+      alert("Room ID must be less than 5 characters.");
+      return;
+    }
+    socket.emit("join", { roomId, userName });
   };
 
   const leaveRoom = () => {
