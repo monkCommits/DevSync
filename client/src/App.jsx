@@ -10,8 +10,9 @@ import {
 } from "@100mslive/react-sdk";
 import JoinRoom from "./Components/JoinRoom.jsx";
 import Sidebar from "./Components/Sidebar.jsx";
+import Output from "./Components/Output.jsx";
 
-const socket = io("https://devsync-m54y.onrender.com/");
+const socket = io("https://devsync-m54y.onrender.com");
 
 export default function App() {
   const [joined, setJoined] = useState(false);
@@ -22,6 +23,9 @@ export default function App() {
   const [typing, setTyping] = useState(`User typing : `);
   const [currentMessage, setCurrentMessage] = useState("");
   const [messageList, setMessageList] = useState([]);
+  const [output, setOutput] = useState("click on run to execute your code");
+  const [isError, setIsError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const isConnected = useHMSStore(selectIsConnectedToRoom);
   const hmsActions = useHMSActions();
 
@@ -41,6 +45,10 @@ export default function App() {
 
     socket.on("codeUpdate", (newCode) => {
       setCode(newCode);
+    });
+
+    socket.on("outputUpdate", (newOutput) => {
+      setOutput(newOutput);
     });
 
     socket.on("userTyping", (user) => {
@@ -67,14 +75,27 @@ export default function App() {
       alert(errorMessage);
     });
 
+    socket.on("codeOutput", (res) => {
+      setIsLoading(false);
+
+      if (res.run.stderr) {
+        setIsError(true);
+      } else {
+        setIsError(false);
+      }
+      setOutput(res.run.output);
+    });
+
     return () => {
       socket.off("authToken");
       socket.off("userJoined");
       socket.off("codeUpdate");
+      socket.off("outputUpdate");
       socket.off("userTyping");
       socket.off("receivedMessage");
       socket.off("userLeft");
       socket.off("joinError");
+      socket.off("codeOutput");
     };
   }, [hmsActions, userName]);
 
@@ -138,6 +159,7 @@ export default function App() {
     setMessageList([]);
     setTyping("");
     setCurrentMessage("");
+    setCode("");
     socket.emit("leaveRoom");
   };
 
@@ -178,6 +200,17 @@ export default function App() {
     }
   };
 
+  const runCode = async () => {
+    if (code) {
+      setIsLoading(true);
+      try {
+        socket.emit("runCode", { code: code, roomId: roomId });
+      } catch (error) {
+        console.error("Error running code:", error);
+      }
+    }
+  };
+
   if (!joined) {
     return (
       <JoinRoom
@@ -207,7 +240,7 @@ export default function App() {
       />
       <div className="editor-wrapper">
         <Editor
-          height={"100%"}
+          height={"70%"}
           defaultLanguage={"javascript"}
           value={code}
           onChange={handleCodeChange}
@@ -217,6 +250,15 @@ export default function App() {
             fontSize: 14,
           }}
         />
+        <button className="run-button" onClick={runCode} disabled={isLoading}>
+          {isLoading ? (
+            <div className="spinner"></div>
+          ) : (
+            <span>&#9654;</span> // The play icon
+          )}
+        </button>
+
+        <Output output={output} isError={isError}></Output>
       </div>
       <div className="video-container">
         <div className="App">

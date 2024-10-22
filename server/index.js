@@ -31,7 +31,11 @@ io.on("connection", (socket) => {
     currentUser = userName;
 
     if (!rooms.has(roomId)) {
-      rooms.set(roomId, { users: new Set(), code: "//start code here" });
+      rooms.set(roomId, {
+        users: new Set(),
+        code: "//start code here",
+        output: "click on run to execute your code",
+      });
     }
 
     if (rooms.get(roomId).users.has(userName)) {
@@ -44,7 +48,7 @@ io.on("connection", (socket) => {
     io.to(roomId).emit("userJoined", Array.from(rooms.get(roomId).users));
 
     socket.emit("codeUpdate", rooms.get(roomId).code);
-
+    socket.emit("outputUpdate", rooms.get(roomId).output);
     try {
       const roomCreateOptions = {
         name: `${roomId} Room`,
@@ -76,7 +80,28 @@ io.on("connection", (socket) => {
     if (rooms.has(roomId)) {
       const room = rooms.get(roomId);
       room.code = code;
+
       socket.to(roomId).emit("codeUpdate", code);
+    }
+  });
+
+  socket.on("runCode", async ({ code, roomId }) => {
+    if (rooms.has(roomId)) {
+      const room = rooms.get(roomId);
+      const response = await axios.post(
+        "https://emkc.org/api/v2/piston/execute",
+        {
+          language: "js",
+          version: "18.15.0",
+          files: [
+            {
+              content: code,
+            },
+          ],
+        }
+      );
+      room.output = response.data.run.output;
+      io.to(roomId).emit("codeOutput", response.data);
     }
   });
 
@@ -88,7 +113,12 @@ io.on("connection", (socket) => {
       socket.leave(currentRoom);
       currentRoom = null;
       currentUser = null;
+      if (room.users.size === 0) {
+        room.code = "//start code here";
+        room.output = "click on run to execute your code";
+      }
     }
+
     socket.emit("userLeft");
   });
 
