@@ -14,7 +14,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "*", // Change this to your frontend URL in production
+    origin: "*",
   },
 });
 
@@ -27,21 +27,20 @@ io.on("connection", (socket) => {
   let currentUser = null;
 
   socket.on("join", async ({ roomId, userName }) => {
-    if (currentRoom) {
-      socket.leave(currentRoom);
-      rooms.get(currentRoom).delete(currentUser);
-      io.to(currentRoom).emit("userJoined", Array.from(rooms.get(currentRoom)));
-    }
-
     currentRoom = roomId;
     currentUser = userName;
-    socket.join(roomId);
-
     if (!rooms.has(roomId)) {
       rooms.set(roomId, new Set());
     }
-    rooms.get(roomId).add(userName);
-    io.to(roomId).emit("userJoined", Array.from(rooms.get(currentRoom)));
+    if (rooms.get(roomId).has(userName)) {
+      socket.emit("joinError", "Username is already taken in this room.");
+      return;
+    } else {
+      // Add the user to the room and notify others
+      socket.join(roomId);
+      rooms.get(roomId).add(userName);
+      io.to(roomId).emit("userJoined", Array.from(rooms.get(roomId)));
+    }
 
     try {
       const roomCreateOptions = {
@@ -78,11 +77,13 @@ io.on("connection", (socket) => {
     if (currentRoom && currentUser) {
       rooms.get(currentRoom).delete(currentUser);
       io.to(currentRoom).emit("userJoined", Array.from(rooms.get(currentRoom)));
+
       socket.leave(currentRoom);
+
       currentRoom = null;
       currentUser = null;
-      socket.emit("userLeft");
     }
+    socket.emit("userLeft");
   });
 
   socket.on("typing", ({ roomId, userName }) => {
@@ -108,39 +109,38 @@ io.on("connection", (socket) => {
   });
 });
 
-//
-// const url = `https://devsync-m54y.onrender.com`;
-// const interval = 30000;
+const url = `https://devsync-m54y.onrender.com`;
+const interval = 30000;
 
-// function reloadWebsite() {
-//   axios
-//     .get(url)
-//     .then((response) => {
-//       console.log(
-//         `Reloaded at ${new Date().toISOString()}: Status Code ${
-//           response.status
-//         }`
-//       );
-//     })
-//     .catch((error) => {
-//       console.error(
-//         `Error reloading at ${new Date().toISOString()}:`,
-//         error.message
-//       );
-//     });
-// }
+function reloadWebsite() {
+  axios
+    .get(url)
+    .then((response) => {
+      console.log(
+        `Reloaded at ${new Date().toISOString()}: Status Code ${
+          response.status
+        }`
+      );
+    })
+    .catch((error) => {
+      console.error(
+        `Error reloading at ${new Date().toISOString()}:`,
+        error.message
+      );
+    });
+}
 
-// setInterval(reloadWebsite, interval);
+setInterval(reloadWebsite, interval);
 
 const port = process.env.PORT || 5000;
 
-// const __dirname = path.resolve();
+const __dirname = path.resolve();
 
-// app.use(express.static(path.join(__dirname, "client/dist")));
+app.use(express.static(path.join(__dirname, "client/dist")));
 
-// app.get("*", (req, res) => {
-//   res.sendFile(path.join(__dirname, "client", "dist", "index.html"));
-// });
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "client", "dist", "index.html"));
+});
 
 server.listen(port, () => {
   console.log(`server running on port ${port}`);

@@ -1,4 +1,3 @@
-// Sidebar.jsx
 import React from "react";
 import ScrollToBottom from "react-scroll-to-bottom";
 import Chat from "./Chat";

@@ -1,15 +1,6 @@
 import { useState } from "react";
 
 const JoinRoom = ({ joinRoom, setRoomId, setUserName, userName, roomId }) => {
-  const [localRoomId, setLocalRoomId] = useState("");
-  const [localUserName, setLocalUserName] = useState("");
-
-  const handleJoin = () => {
-    setRoomId(localRoomId);
-    setUserName(localUserName);
-    joinRoom(localRoomId, localUserName);
-  };
-
   return (
     <div className="join-container">
       <div className="join-form">
@@ -22,7 +13,7 @@ const JoinRoom = ({ joinRoom, setRoomId, setUserName, userName, roomId }) => {
         />
         <input
           type="text"
-          placeholder="username"
+          placeholder="Username"
           value={userName}
           onChange={(e) => setUserName(e.target.value)}
         />

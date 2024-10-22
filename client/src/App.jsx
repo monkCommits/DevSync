@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import "./App.css";
 import io from "socket.io-client";
 import Editor from "@monaco-editor/react";
-import ScrollToBottom from "react-scroll-to-bottom";
 import Conference from "./Components/Conference.jsx";
 import {
   selectIsConnectedToRoom,
@@ -12,7 +11,7 @@ import {
 import JoinRoom from "./Components/JoinRoom.jsx";
 import Sidebar from "./Components/Sidebar.jsx";
 
-const socket = io("http://localhost:5000/");
+const socket = io("https://devsync-m54y.onrender.com");
 
 export default function App() {
   const [joined, setJoined] = useState(false);
@@ -32,6 +31,7 @@ export default function App() {
     });
 
     socket.on("userJoined", (users) => {
+      setJoined(true);
       setUsers(users);
     });
 
@@ -53,11 +53,18 @@ export default function App() {
     });
 
     socket.on("userLeft", (user) => {
+      setJoined(false);
       hmsActions.leave();
       setUsers((prevUsers) => prevUsers.filter((u) => u !== user));
       if (!user) {
         setMessageList([]);
       }
+    });
+
+    socket.on("joinError", (errorMessage) => {
+      setUserName("");
+      setRoomId("");
+      alert(errorMessage);
     });
 
     return () => {
@@ -67,6 +74,7 @@ export default function App() {
       socket.off("userTyping");
       socket.off("receivedMessage");
       socket.off("userLeft");
+      socket.off("joinError");
     };
   }, [hmsActions, userName]);
 
@@ -83,9 +91,6 @@ export default function App() {
 
         hmsActions.leave();
       }
-
-      e.preventDefault();
-      e.returnValue = "";
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
@@ -110,16 +115,18 @@ export default function App() {
   const joinRoom = () => {
     if (roomId && userName) {
       socket.emit("join", { roomId, userName });
-      setJoined(true);
     }
   };
 
   const leaveRoom = () => {
-    socket.emit("leaveRoom");
-    setJoined(false);
     setRoomId("");
     setUserName("");
-    setCode("");
+    setCode("//start code here");
+    setUsers([]);
+    setMessageList([]);
+    setTyping("");
+    setCurrentMessage("");
+    socket.emit("leaveRoom");
   };
 
   const copyRoomId = () => {
