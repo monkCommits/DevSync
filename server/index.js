@@ -29,18 +29,21 @@ io.on("connection", (socket) => {
   socket.on("join", async ({ roomId, userName }) => {
     currentRoom = roomId;
     currentUser = userName;
+
     if (!rooms.has(roomId)) {
-      rooms.set(roomId, new Set());
+      rooms.set(roomId, { users: new Set(), code: "//start code here" });
     }
-    if (rooms.get(roomId).has(userName)) {
+
+    if (rooms.get(roomId).users.has(userName)) {
       socket.emit("joinError", "Username is already taken in this room.");
       return;
-    } else {
-      // Add the user to the room and notify others
-      socket.join(roomId);
-      rooms.get(roomId).add(userName);
-      io.to(roomId).emit("userJoined", Array.from(rooms.get(roomId)));
     }
+
+    socket.join(roomId);
+    rooms.get(roomId).users.add(userName);
+    io.to(roomId).emit("userJoined", Array.from(rooms.get(roomId).users));
+
+    socket.emit("codeUpdate", rooms.get(roomId).code);
 
     try {
       const roomCreateOptions = {
@@ -70,16 +73,19 @@ io.on("connection", (socket) => {
   });
 
   socket.on("codeChange", ({ roomId, code }) => {
-    socket.to(roomId).emit("codeUpdate", code);
+    if (rooms.has(roomId)) {
+      const room = rooms.get(roomId);
+      room.code = code;
+      socket.to(roomId).emit("codeUpdate", code);
+    }
   });
 
   socket.on("leaveRoom", () => {
     if (currentRoom && currentUser) {
-      rooms.get(currentRoom).delete(currentUser);
-      io.to(currentRoom).emit("userJoined", Array.from(rooms.get(currentRoom)));
-
+      const room = rooms.get(currentRoom);
+      room.users.delete(currentUser);
+      io.to(currentRoom).emit("userJoined", Array.from(room.users));
       socket.leave(currentRoom);
-
       currentRoom = null;
       currentUser = null;
     }
@@ -89,10 +95,6 @@ io.on("connection", (socket) => {
   socket.on("typing", ({ roomId, userName }) => {
     socket.emit("userTyping", userName);
     socket.to(roomId).emit("userTyping", userName);
-  });
-
-  socket.on("languageChange", ({ roomId, language }) => {
-    io.to(roomId).emit("languageUpdate", language);
   });
 
   socket.on("disconnect", () => {
