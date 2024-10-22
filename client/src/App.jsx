@@ -12,7 +12,7 @@ import JoinRoom from "./Components/JoinRoom.jsx";
 import Sidebar from "./Components/Sidebar.jsx";
 import Output from "./Components/Output.jsx";
 
-const socket = io("https://devsync-m54y.onrender.com");
+const socket = io("https://devsync-m54y.onrender.com/");
 
 export default function App() {
   const [joined, setJoined] = useState(false);
@@ -84,6 +84,11 @@ export default function App() {
         setIsError(false);
       }
       setOutput(res.run.output);
+      socket.emit("codeRunning", { roomId, isLoading: false });
+    });
+
+    socket.on("codeRunning", ({ isLoading }) => {
+      setIsLoading(isLoading);
     });
 
     return () => {
@@ -96,6 +101,7 @@ export default function App() {
       socket.off("userLeft");
       socket.off("joinError");
       socket.off("codeOutput");
+      socket.off("codeRunning");
     };
   }, [hmsActions, userName]);
 
@@ -202,6 +208,7 @@ export default function App() {
 
   const runCode = async () => {
     if (code) {
+      socket.emit("codeRunning", { roomId, isLoading: true });
       setIsLoading(true);
       try {
         socket.emit("runCode", { code: code, roomId: roomId });
@@ -261,9 +268,7 @@ export default function App() {
         <Output output={output} isError={isError}></Output>
       </div>
       <div className="video-container">
-        <div className="App">
-          <Conference />
-        </div>
+        <Conference />
       </div>
     </div>
   );

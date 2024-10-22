@@ -140,6 +140,10 @@ io.on("connection", (socket) => {
       .to(roomId)
       .emit("receivedMessage", { roomId, userName, message, time });
   });
+
+  socket.on("codeRunning", ({ roomId, isLoading }) => {
+    socket.to(roomId).emit("codeRunning", { isLoading });
+  });
 });
 
 const url = `https://devsync-m54y.onrender.com`;
