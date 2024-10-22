@@ -87,6 +87,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("typing", ({ roomId, userName }) => {
+    socket.emit("userTyping", userName);
     socket.to(roomId).emit("userTyping", userName);
   });
 
