@@ -4,7 +4,7 @@ const JoinRoom = ({ joinRoom, setRoomId, setUserName, userName, roomId }) => {
   return (
     <div className="join-container">
       <div className="join-form">
-        <h1>Join Code Room</h1>
+        <h1>Join Room</h1>
         <input
           type="text"
           placeholder="Room ID"
@@ -18,7 +18,7 @@ const JoinRoom = ({ joinRoom, setRoomId, setUserName, userName, roomId }) => {
           onChange={(e) => setUserName(e.target.value)}
         />
         <button type="button" onClick={joinRoom}>
-          Join Room
+          Join
         </button>
       </div>
     </div>
