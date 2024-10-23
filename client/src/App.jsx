@@ -12,7 +12,7 @@ import JoinRoom from "./Components/JoinRoom.jsx";
 import Sidebar from "./Components/Sidebar.jsx";
 import Output from "./Components/Output.jsx";
 
-const socket = io("https://devsync-m54y.onrender.com/");
+const socket = io("https://devsync-m54y.onrender.com");
 
 export default function App() {
   const [joined, setJoined] = useState(false);
@@ -166,7 +166,7 @@ export default function App() {
     setCode("//start code here");
     setUsers([]);
     setMessageList([]);
-    setTyping("");
+    setTyping("User typing : ");
     setCurrentMessage("");
     setCode("");
     socket.emit("leaveRoom");
