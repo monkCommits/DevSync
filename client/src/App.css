@@ -172,8 +172,10 @@ ul li {
   border-radius: 4px;
 }
 
+
+
 .leave-button {
-  padding: 0.3rem;
+  padding: 0.5rem 1rem;
   background-color: #f90000;
   color: white;
   border: none;
@@ -182,10 +184,11 @@ ul li {
   transition: background-color 0.3s ease;
 }
 
-
 .leave-button:hover {
   background-color: #ab2a1c;
 }
+
+
 
 .users-wrapper{
   max-height: 15vh;
