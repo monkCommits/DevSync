@@ -85,10 +85,14 @@ export default function App() {
       }
       setOutput(res.run.output);
       socket.emit("codeRunning", { roomId, isLoading: false });
+      socket.emit("errorPresent", { roomId, isError });
     });
 
     socket.on("codeRunning", ({ isLoading }) => {
       setIsLoading(isLoading);
+    });
+    socket.on("errorUpdate", ({ isLoading }) => {
+      setIsError(true);
     });
 
     return () => {
@@ -102,6 +106,7 @@ export default function App() {
       socket.off("joinError");
       socket.off("codeOutput");
       socket.off("codeRunning");
+      socket.off("errorUpdate");
     };
   }, [hmsActions, userName]);
 

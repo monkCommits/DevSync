@@ -35,6 +35,7 @@ io.on("connection", (socket) => {
         users: new Set(),
         code: "//start code here",
         output: "click on run to execute your code",
+        error: false,
       });
     }
 
@@ -49,6 +50,7 @@ io.on("connection", (socket) => {
 
     socket.emit("codeUpdate", rooms.get(roomId).code);
     socket.emit("outputUpdate", rooms.get(roomId).output);
+    socket.emit("errorUpdate", rooms.get(roomId).error);
     try {
       const roomCreateOptions = {
         name: `${roomId} Room`,
@@ -143,6 +145,10 @@ io.on("connection", (socket) => {
 
   socket.on("codeRunning", ({ roomId, isLoading }) => {
     socket.to(roomId).emit("codeRunning", { isLoading });
+  });
+  socket.on("errorPresent", ({ roomId, isError }) => {
+    const room = rooms.get(roomId);
+    room.error = isError;
   });
 });
 
