@@ -73,6 +73,20 @@ body {
   display: flex;
   flex-direction: column;
 }
+.editor{
+  .editor {
+    max-height: 150vh; /* Limit the height to enable vertical scrolling */
+    overflow-y: auto; /* Enable vertical scrolling */
+    overflow-x: auto; /* Enable horizontal scrolling for long code */
+    padding: 10px;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    word-wrap: normal; /* Allow horizontal scrolling for long lines */
+    white-space: pre; /* Keep code formatting intact and allow horizontal scrolling */
+  }
+  
+}
 
 .sidebar {
   flex: 1;
@@ -478,4 +492,14 @@ body {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+.output-container {
+  max-height: 50vh; /* Limit the height to enable vertical scrolling */
+  overflow-y: auto; /* Enable vertical scrolling */
+  overflow-x: hidden; /* Disable horizontal scrolling */
+  padding: 10px;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  word-wrap: break-word; /* Ensure long words or content breaks and fits within the width */
 }

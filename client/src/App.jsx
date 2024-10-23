@@ -12,7 +12,7 @@ import JoinRoom from "./Components/JoinRoom.jsx";
 import Sidebar from "./Components/Sidebar.jsx";
 import Output from "./Components/Output.jsx";
 
-const socket = io("https://devsync-m54y.onrender.com/");
+const socket = io("localhost:5000");
 
 export default function App() {
   const [joined, setJoined] = useState(false);
@@ -252,6 +252,7 @@ export default function App() {
       />
       <div className="editor-wrapper">
         <Editor
+          className="editor"
           height={"70%"}
           defaultLanguage={"javascript"}
           value={code}
