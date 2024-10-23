@@ -23,7 +23,7 @@ export default function App() {
   const [typing, setTyping] = useState(`User typing : `);
   const [currentMessage, setCurrentMessage] = useState("");
   const [messageList, setMessageList] = useState([]);
-  const [output, setOutput] = useState("click on run to execute your code");
+  const [output, setOutput] = useState("click on run icon to execute your code");
   const [isError, setIsError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const isConnected = useHMSStore(selectIsConnectedToRoom);
