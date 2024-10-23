@@ -34,7 +34,7 @@ io.on("connection", (socket) => {
       rooms.set(roomId, {
         users: new Set(),
         code: "//start code here",
-        output: "click on run to execute your code",
+        output: "click on run icon to execute your code",
         error: false,
       });
     }
