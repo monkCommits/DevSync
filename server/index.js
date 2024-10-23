@@ -34,7 +34,7 @@ io.on("connection", (socket) => {
       rooms.set(roomId, {
         users: new Set(),
         code: "//start code here",
-        output: "click on run icon to execute your code",
+        output: "click on run to execute your code",
         error: false,
       });
     }
@@ -46,11 +46,16 @@ io.on("connection", (socket) => {
 
     socket.join(roomId);
     rooms.get(roomId).users.add(userName);
-    io.to(roomId).emit("userJoined", Array.from(rooms.get(roomId).users));
 
-    socket.emit("codeUpdate", rooms.get(roomId).code);
-    socket.emit("outputUpdate", rooms.get(roomId).output);
-    socket.emit("errorUpdate", rooms.get(roomId).error);
+    const room = rooms.get(roomId);
+
+    io.to(roomId).emit("userJoined", Array.from(room.users));
+
+    // Send the room's current code, output, and error state to the user
+    socket.emit("codeUpdate", room.code);
+    socket.emit("outputUpdate", room.output);
+    socket.emit("errorUpdate", { isError: room.error }); // Update with error state
+
     try {
       const roomCreateOptions = {
         name: `${roomId} Room`,
@@ -58,18 +63,17 @@ io.on("connection", (socket) => {
         recording_info: { enabled: false },
       };
 
-      const room = await hms.rooms.create(roomCreateOptions);
-      console.log("Room created:", room);
+      const createdRoom = await hms.rooms.create(roomCreateOptions);
+      console.log("Room created:", createdRoom);
 
       const tokenConfig = {
-        roomId: room.id,
+        roomId: createdRoom.id,
         role: "host",
         userId: userName,
       };
 
       const token = await hms.auth.getAuthToken(tokenConfig);
       socket.emit("authToken", { token });
-      console.log(userName);
     } catch (error) {
       console.error("Error creating room or generating token:", error);
       socket.emit("authError", "Could not create room or generate auth token");
@@ -118,6 +122,7 @@ io.on("connection", (socket) => {
       if (room.users.size === 0) {
         room.code = "//start code here";
         room.output = "click on run to execute your code";
+        room.error = false;
       }
     }
 

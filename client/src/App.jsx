@@ -18,12 +18,15 @@ export default function App() {
   const [joined, setJoined] = useState(false);
   const [roomId, setRoomId] = useState("");
   const [userName, setUserName] = useState("");
+  const [error, setError] = useState("");
   const [code, setCode] = useState("//start code here");
   const [users, setUsers] = useState([]);
   const [typing, setTyping] = useState(`User typing : `);
   const [currentMessage, setCurrentMessage] = useState("");
   const [messageList, setMessageList] = useState([]);
-  const [output, setOutput] = useState("click on run icon to execute your code");
+  const [output, setOutput] = useState(
+    "click on run icon to execute your code"
+  );
   const [isError, setIsError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const isConnected = useHMSStore(selectIsConnectedToRoom);
@@ -41,6 +44,10 @@ export default function App() {
 
     socket.on("roomCode", (data) => {
       console.log("Received room code:", data.roomCode);
+    });
+
+    socket.on("joinError", (errorMessage) => {
+      setError(errorMessage);
     });
 
     socket.on("codeUpdate", (newCode) => {
@@ -69,41 +76,33 @@ export default function App() {
       }
     });
 
-    socket.on("joinError", (errorMessage) => {
-      setUserName("");
-      setRoomId("");
-      alert(errorMessage);
-    });
-
     socket.on("codeOutput", (res) => {
       setIsLoading(false);
 
-      if (res.run.stderr) {
-        setIsError(true);
-      } else {
-        setIsError(false);
-      }
+      const errorPresent = res.run.stderr ? true : false;
+      setIsError(errorPresent);
       setOutput(res.run.output);
       socket.emit("codeRunning", { roomId, isLoading: false });
-      socket.emit("errorPresent", { roomId, isError });
+      socket.emit("errorPresent", { roomId, isError: errorPresent });
     });
 
     socket.on("codeRunning", ({ isLoading }) => {
       setIsLoading(isLoading);
     });
-    socket.on("errorUpdate", ({ isLoading }) => {
-      setIsError(true);
+    socket.on("errorUpdate", ({ isError }) => {
+      setIsError(isError);
     });
 
     return () => {
       socket.off("authToken");
       socket.off("userJoined");
+      socket.off("roomCode");
+      socket.off("joinError");
       socket.off("codeUpdate");
       socket.off("outputUpdate");
       socket.off("userTyping");
       socket.off("receivedMessage");
       socket.off("userLeft");
-      socket.off("joinError");
       socket.off("codeOutput");
       socket.off("codeRunning");
       socket.off("errorUpdate");
@@ -145,18 +144,17 @@ export default function App() {
   }, []);
 
   const joinRoom = () => {
+    setError("");
     if (!roomId || !userName) {
-      alert("Please enter both room ID and username.");
+      setError("Please enter both room ID and username.");
       return;
     }
-
     if (userName.length > 10) {
-      alert("Username must be less than 10 characters.");
+      setError("Username must be less than 10 characters.");
       return;
     }
-
     if (roomId.length > 5) {
-      alert("Room ID must be less than 5 characters.");
+      setError("Room ID must be less than 5 characters.");
       return;
     }
     socket.emit("join", { roomId, userName });
@@ -225,13 +223,16 @@ export default function App() {
 
   if (!joined) {
     return (
-      <JoinRoom
-        joinRoom={joinRoom}
-        setRoomId={setRoomId}
-        setUserName={setUserName}
-        roomId={roomId}
-        userName={userName}
-      />
+      <div>
+        <JoinRoom
+          joinRoom={joinRoom}
+          setRoomId={setRoomId}
+          setUserName={setUserName}
+          roomId={roomId}
+          userName={userName}
+          error={error}
+        />
+      </div>
     );
   }
 
@@ -254,6 +255,7 @@ export default function App() {
         <Editor
           className="editor"
           height={"70%"}
+          width={"100%"}
           defaultLanguage={"javascript"}
           value={code}
           onChange={handleCodeChange}
@@ -263,13 +265,15 @@ export default function App() {
             fontSize: 14,
           }}
         />
-        <button className="run-button" onClick={runCode} disabled={isLoading}>
-          {isLoading ? (
-            <div className="spinner"></div>
-          ) : (
-            <span>&#9654;</span> // The play icon
-          )}
-        </button>
+        <div className="run-button-container">
+          <button className="run-button" onClick={runCode} disabled={isLoading}>
+            {isLoading ? (
+              <div className="spinner"></div>
+            ) : (
+              <span>&#9654;</span> // The play icon
+            )}
+          </button>
+        </div>
 
         <Output output={output} isError={isError}></Output>
       </div>

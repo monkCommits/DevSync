@@ -38,6 +38,7 @@ const Chat = ({
 
       <div className="chat-footer">
         <input
+          className="message-input-box"
           type="text"
           placeholder="Type your messages here..."
           onChange={handleMessageChange}

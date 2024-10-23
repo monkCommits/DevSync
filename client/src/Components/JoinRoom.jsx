@@ -1,6 +1,13 @@
 import { useState } from "react";
 
-const JoinRoom = ({ joinRoom, setRoomId, setUserName, userName, roomId }) => {
+const JoinRoom = ({
+  joinRoom,
+  setRoomId,
+  setUserName,
+  userName,
+  roomId,
+  error,
+}) => {
   return (
     <div className="join-container">
       <div className="join-form">
@@ -20,6 +27,8 @@ const JoinRoom = ({ joinRoom, setRoomId, setUserName, userName, roomId }) => {
         <button type="button" onClick={joinRoom}>
           Join
         </button>
+
+        {error && <span className="error-message">{error}</span>}
       </div>
     </div>
   );
