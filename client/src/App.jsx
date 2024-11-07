@@ -252,6 +252,9 @@ export default function App() {
         userName={userName}
       />
       <div className="editor-wrapper">
+        <div className="editor-header">
+          <h1>A minimilistic collaborative JavaScript code editor</h1>
+        </div>
         <Editor
           className="editor"
           height={"70%"}

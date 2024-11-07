@@ -51,10 +51,9 @@ io.on("connection", (socket) => {
 
     io.to(roomId).emit("userJoined", Array.from(room.users));
 
-    // Send the room's current code, output, and error state to the user
     socket.emit("codeUpdate", room.code);
     socket.emit("outputUpdate", room.output);
-    socket.emit("errorUpdate", { isError: room.error }); // Update with error state
+    socket.emit("errorUpdate", room.error);
 
     try {
       const roomCreateOptions = {

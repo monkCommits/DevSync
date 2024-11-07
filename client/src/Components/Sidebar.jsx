@@ -19,12 +19,14 @@ const Sidebar = ({
     <div className="sidebar">
       <div className="room-info">
         <h2>Room Code : {roomId}</h2>
-        <button onClick={copyRoomId} className="copy-button">
-          Copy ID
-        </button>
-        <button className="leave-button" onClick={leaveRoom}>
-          Leave Room
-        </button>
+        <div className="sidebar-btn-container">
+          <button onClick={copyRoomId} className="copy-button">
+            Copy ID
+          </button>
+          <button className="leave-button" onClick={leaveRoom}>
+            Leave Room
+          </button>
+        </div>
       </div>
       <h3>Users in Room</h3>
       <ul>
